@@ -1,0 +1,57 @@
+{
+  "ticket_types": [
+    {
+      "key": "support",
+      "name": "General Support",
+      "description": "Get help with general server questions",
+      "emoji": "🎫",
+      "category_id": 1562442586801832018,
+      "staff_role_ids": []
+    },
+    {
+      "key": "player_report",
+      "name": "Player Report",
+      "description": "Report a rule-breaking player",
+      "emoji": "🚨",
+      "category_id": 1562442540689661952,
+      "staff_role_ids": []
+    },
+    {
+      "key": "appeal",
+      "name": "Ban Appeal",
+      "description": "Appeal a ban or punishment",
+      "emoji": "⚖️",
+      "category_id": 1562442497123295374,
+      "staff_role_ids": []
+    },
+    {
+      "key": "other",
+      "name": "Other",
+      "description": "Anything else",
+      "emoji": "📋",
+      "category_id": 1562442637599047741,
+      "staff_role_ids": []
+    }
+  ],
+  "channels": {
+    "transcript_log_channel_id": 1562443143268409477,
+    "log_channel_closed_id":     1562443143268409477,
+    "welcome_channel_id":        1562413090346369115,
+    "suggestion_channel_id":     1562452208430227517,
+    "question_channel_id":       null,
+    "bug_report_channel_id":     null
+  },
+  "role_ids": {
+    "staff": [1562413090346369115],
+    "admin": [1562418364167491584]
+  },
+  "permissions": {
+    "create":           "everyone",
+    "claim":            "staff_and_admin",
+    "manage":           "staff_and_admin",
+    "close_request":    "owner_and_staff",
+    "close_cancel":     "owner_and_staff",
+    "create_role_ids":  []
+  },
+  "max_open_tickets_per_user": 2
+}

@@ -1,0 +1,24 @@
+# Environment — never commit your real secrets
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+env/
+
+# Logs
+logs/
+*.log
+
+# Database & local data
+data/
+*.db
+*.db-journal
+*.sqlite3
+
+# OS junk
+.DS_Store
+Thumbs.db
