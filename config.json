@@ -39,7 +39,8 @@
     "welcome_channel_id":        1562413090346369115,
     "suggestion_channel_id":     1562452208430227517,
     "question_channel_id":       null,
-    "bug_report_channel_id":     null
+    "bug_report_channel_id":     null,
+    "gang_recruitment_channel_id": 1562414173948743710
   },
   "role_ids": {
     "staff": [1562413090346369115],

@@ -94,6 +94,11 @@ class DarklansBot(commands.Bot):
             BugLaunchView,
             BugCommands,
         )
+        from gangs import (
+            GangItemView,
+            GangLaunchView,
+            GangCommands,
+        )
 
         # ── Database ──────────────────────────────────────────────────────────
         await init_db()
@@ -111,6 +116,8 @@ class DarklansBot(commands.Bot):
         self.add_view(QuestionItemView(cfg))
         self.add_view(BugLaunchView(cfg))
         self.add_view(BugItemView(cfg))
+        self.add_view(GangLaunchView(cfg))
+        self.add_view(GangItemView(cfg))
         log.info("Persistent views registered.")
 
         # ── Slash commands ────────────────────────────────────────────────────
@@ -120,6 +127,7 @@ class DarklansBot(commands.Bot):
         self.tree.add_command(SuggestionCommands(cfg), guild=GUILD)
         self.tree.add_command(QuestionCommands(cfg), guild=GUILD)
         self.tree.add_command(BugCommands(cfg), guild=GUILD)
+        self.tree.add_command(GangCommands(cfg), guild=GUILD)
 
         synced = await self.tree.sync(guild=GUILD)
         log.info(

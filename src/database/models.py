@@ -170,3 +170,27 @@ class DiscordBugReport(Base):
 
     def __repr__(self) -> str:
         return f"<DiscordBugReport #{self.report_number} status={self.status}>"
+
+
+class DiscordGangRecruitment(Base):
+    __tablename__ = "discord_gang_recruitments"
+
+    id:                 Mapped[int]               = mapped_column(Integer, primary_key=True, autoincrement=True)
+    recruitment_number: Mapped[int]               = mapped_column(Integer, unique=True, nullable=False)
+    gang_name:          Mapped[str]               = mapped_column(String(128), nullable=False)
+    leader_id:          Mapped[int]               = mapped_column(BigInteger, nullable=False)
+    leader_name:        Mapped[str]               = mapped_column(String(128), nullable=False)
+    playstyle:          Mapped[str]               = mapped_column(String(128), nullable=False)
+    members_wanted:     Mapped[str]               = mapped_column(String(32), nullable=False)
+    about:              Mapped[str]               = mapped_column(Text, nullable=False)
+    requirements:       Mapped[str]               = mapped_column(Text, nullable=False)
+    contact:            Mapped[str]               = mapped_column(String(128), nullable=False, default="Discord")
+    status:             Mapped[str]               = mapped_column(String(32), nullable=False, default="Recruiting")
+    message_id:         Mapped[int | None]        = mapped_column(BigInteger, unique=True, nullable=True)
+    channel_id:         Mapped[int | None]        = mapped_column(BigInteger, nullable=True)
+    thread_id:          Mapped[int | None]        = mapped_column(BigInteger, nullable=True)
+    created_at:         Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at:         Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+    def __repr__(self) -> str:
+        return f"<DiscordGangRecruitment #{self.recruitment_number} gang={self.gang_name}>"

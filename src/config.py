@@ -45,6 +45,7 @@ class ChannelConfig(BaseModel):
     suggestion_channel_id:     Optional[int] = None
     question_channel_id:       Optional[int] = None
     bug_report_channel_id:     Optional[int] = None
+    gang_recruitment_channel_id: Optional[int] = None
 
 class RoleIds(BaseModel):
     staff: list[int] = []
