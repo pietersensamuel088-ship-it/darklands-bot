@@ -4,6 +4,7 @@ applications package – Discord application bot replica for Darklands SMP.
 from applications.commands import ApplyCommands
 from applications.session import ApplicationManager, application_manager
 from applications.views import (
+    ApplicationAcceptModal,
     ApplicationDenyModal,
     ApplicationLaunchView,
     ApplicationReviewView,
@@ -17,6 +18,7 @@ __all__ = [
     "application_manager",
     "ApplicationLaunchView",
     "ApplicationReviewView",
+    "ApplicationAcceptModal",
     "ApplicationDenyModal",
     "build_application_embed",
     "open_ticket_for_application",

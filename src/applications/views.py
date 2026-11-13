@@ -292,8 +292,6 @@ class ApplicationReviewView(ui.View):
             )
             return
 
-        await interaction.response.defer(ephemeral=True)
-
         async with get_session() as session:
             stmt = select(DiscordApplication).where(
                 DiscordApplication.message_id == interaction.message.id
@@ -302,69 +300,20 @@ class ApplicationReviewView(ui.View):
             app = res.scalar_one_or_none()
 
             if not app:
-                await interaction.followup.send("❌ Application not found in database.", ephemeral=True)
+                await interaction.response.send_message(
+                    "❌ Application not found in database.", ephemeral=True
+                )
                 return
 
             if app.status != "Pending":
-                await interaction.followup.send(
+                await interaction.response.send_message(
                     f"⚠️ This application has already been marked as **{app.status}**.",
                     ephemeral=True,
                 )
                 return
 
-            now = datetime.datetime.now(datetime.timezone.utc)
-            app.status = "Accepted"
-            app.reviewer_id = interaction.user.id
-            app.reviewer_name = interaction.user.display_name
-            app.reviewed_at = now
-
-            # Refresh embed
-            embed = build_application_embed(app, interaction.guild)
-
-            # Update buttons: Disable Accept/Deny
-            for child in self.children:
-                if isinstance(child, ui.Button) and child.custom_id in {"app:action:accept", "app:action:deny"}:
-                    child.disabled = True
-
-            await interaction.message.edit(embed=embed, view=self)
-
-            # Assign role if configured
-            app_cfg = next((a for a in self.cfg.applications if a.key == app.type_key), None)
-            role_assigned = False
-            if app_cfg and app_cfg.accepted_role_id:
-                member = interaction.guild.get_member(app.applicant_id)
-                if member:
-                    role = interaction.guild.get_role(app_cfg.accepted_role_id)
-                    if role:
-                        try:
-                            await member.add_roles(role, reason=f"Application #{app.application_number} accepted")
-                            role_assigned = True
-                        except Exception as exc:
-                            log.warning("Failed to assign role %s to member %s: %s", role.id, member.id, exc)
-
-            # DM Applicant
-            try:
-                applicant_user = await interaction.client.fetch_user(app.applicant_id)
-                dm_embed = discord.Embed(
-                    title=f"🎉 {app.type_name} Accepted!",
-                    description=(
-                        f"Congratulations, **{applicant_user.display_name}**!\n\n"
-                        f"Your **{app.type_name}** for Darklands SMP has been **ACCEPTED** by {interaction.user.mention}!\n"
-                        + ("• Your in-game/Discord tester role has been granted.\n" if role_assigned else "")
-                        + "\nWelcome to the team! Keep an eye on announcements for testing phases and access."
-                    ),
-                    colour=0x57F287,
-                    timestamp=now,
-                )
-                dm_embed.set_footer(text="Darklands SMP • Applications")
-                await applicant_user.send(embed=dm_embed)
-            except Exception as exc:
-                log.info("Could not DM applicant %s about acceptance: %s", app.applicant_id, exc)
-
-            await interaction.followup.send(
-                f"✅ **Application #{app.application_number} has been accepted!**",
-                ephemeral=True,
-            )
+            modal = ApplicationAcceptModal(app.id, self.cfg, interaction.message.id)
+            await interaction.response.send_modal(modal)
 
     # ──────────────────────────────────────────────────────────────────────────
     # Deny Button
@@ -489,14 +438,166 @@ class ApplicationReviewView(ui.View):
 
 
 # ==============================================================================
-# 4. Application Deny Modal
+# 4. Modals (Accept & Deny)
 # ==============================================================================
+
+class ApplicationAcceptModal(ui.Modal, title="Accept Application"):
+    """Modal for staff to optionally provide acceptance notes/reason."""
+
+    reason_input: ui.TextInput = ui.TextInput(
+        label="Acceptance Notes / Reason (Optional)",
+        style=discord.TextStyle.paragraph,
+        placeholder="Add any notes or welcome message for the applicant (optional)...",
+        required=False,
+        max_length=500,
+    )
+
+    def __init__(self, app_id: int, cfg: BotConfig, message_id: int) -> None:
+        super().__init__()
+        self.app_id = app_id
+        self.cfg = cfg
+        self.message_id = message_id
+
+    async def on_submit(self, interaction: discord.Interaction) -> None:
+        await interaction.response.defer(ephemeral=True)
+
+        async with get_session() as session:
+            stmt = select(DiscordApplication).where(DiscordApplication.id == self.app_id)
+            res = await session.execute(stmt)
+            app = res.scalar_one_or_none()
+
+            if not app:
+                await interaction.followup.send("❌ Application not found.", ephemeral=True)
+                return
+
+            if app.status != "Pending":
+                await interaction.followup.send(
+                    f"⚠️ This application has already been marked as **{app.status}**.",
+                    ephemeral=True,
+                )
+                return
+
+            now = datetime.datetime.now(datetime.timezone.utc)
+            reason = self.reason_input.value.strip()
+
+            app.status = "Accepted"
+            app.reviewer_id = interaction.user.id
+            app.reviewer_name = interaction.user.display_name
+            app.review_reason = reason if reason else None
+            app.reviewed_at = now
+
+            # Refresh review embed in pending channel
+            embed = build_application_embed(app, interaction.guild)
+            view = ApplicationReviewView(self.cfg)
+            for child in view.children:
+                if isinstance(child, ui.Button) and child.custom_id in {"app:action:accept", "app:action:deny"}:
+                    child.disabled = True
+
+            try:
+                msg = await interaction.channel.fetch_message(self.message_id)
+                await msg.edit(embed=embed, view=view)
+            except Exception as exc:
+                log.warning("Could not edit review message %s: %s", self.message_id, exc)
+
+            # Assign role if configured
+            app_cfg = next((a for a in self.cfg.applications if a.key == app.type_key), None)
+            role_id = (
+                (app_cfg.accepted_role_id if app_cfg else None)
+                or self.cfg.channels.beta_tester_role_id
+            )
+            member = interaction.guild.get_member(app.applicant_id)
+            if not member:
+                try:
+                    member = await interaction.guild.fetch_member(app.applicant_id)
+                except Exception:
+                    pass
+
+            if member and role_id:
+                role = interaction.guild.get_role(role_id)
+                if role:
+                    try:
+                        await member.add_roles(
+                            role,
+                            reason=f"Application #{app.application_number} accepted by {interaction.user}",
+                        )
+                    except Exception as exc:
+                        log.warning("Failed to assign role %s to member %s: %s", role.id, member.id, exc)
+
+            # Log to Accepted Channel (1570844617773940741)
+            accepted_chan_id = (
+                (app_cfg.accepted_channel_id if app_cfg else None)
+                or self.cfg.channels.application_accepted_channel_id
+            )
+            if accepted_chan_id:
+                accepted_chan = interaction.guild.get_channel(accepted_chan_id)
+                if accepted_chan:
+                    try:
+                        await accepted_chan.send(embed=embed)
+                    except Exception as exc:
+                        log.warning("Could not post to accepted channel %s: %s", accepted_chan_id, exc)
+
+            # DM Applicant: "You've been accepted and you've got the role."
+            try:
+                applicant_user = await interaction.client.fetch_user(app.applicant_id)
+                dm_desc = "You've been accepted and you've got the role."
+                if reason:
+                    dm_desc += f"\n\n**Staff Notes:** {reason}"
+                lounge_id = (
+                    (app_cfg.lounge_channel_id if app_cfg else None)
+                    or self.cfg.channels.beta_tester_lounge_channel_id
+                )
+                if lounge_id:
+                    dm_desc += f"\n\nHead over to the beta tester lounge: <#{lounge_id}>"
+
+                dm_embed = discord.Embed(
+                    title=f"🎉 {app.type_name} Accepted!",
+                    description=dm_desc,
+                    colour=0x57F287,
+                    timestamp=now,
+                )
+                dm_embed.set_footer(text="Darklands SMP • Applications")
+                await applicant_user.send(embed=dm_embed)
+            except Exception as exc:
+                log.info("Could not DM applicant %s about acceptance: %s", app.applicant_id, exc)
+
+            # Welcome in Beta Tester Lounge (1570846697414852628)
+            lounge_chan_id = (
+                (app_cfg.lounge_channel_id if app_cfg else None)
+                or self.cfg.channels.beta_tester_lounge_channel_id
+            )
+            if lounge_chan_id:
+                lounge_chan = interaction.guild.get_channel(lounge_chan_id)
+                if lounge_chan:
+                    info_id = self.cfg.channels.tester_info_channel_id
+                    info_ref = f" Check out <#{info_id}> for testing instructions, reporting bugs, and suggestions." if info_id else ""
+                    wel_embed = discord.Embed(
+                        title="🎉 New Beta Tester Joined!",
+                        description=(
+                            f"Welcome <@{app.applicant_id}> (`{app.applicant_name}`) to the **Darklands SMP Beta Tester** team!\n\n"
+                            f"Thank you for helping us test features and report bugs.{info_ref}"
+                        ),
+                        colour=0x57F287,
+                        timestamp=now,
+                    )
+                    if app.applicant_avatar:
+                        wel_embed.set_thumbnail(url=app.applicant_avatar)
+                    wel_embed.set_footer(text="Darklands SMP • Beta Tester Team")
+                    try:
+                        await lounge_chan.send(content=f"🎉 Welcome <@{app.applicant_id}>!", embed=wel_embed)
+                    except Exception as exc:
+                        log.warning("Could not send welcome message to lounge %s: %s", lounge_chan_id, exc)
+
+            await interaction.followup.send(
+                f"✅ **Application #{app.application_number} has been accepted and logged!**",
+                ephemeral=True,
+            )
+
 
 class ApplicationDenyModal(ui.Modal, title="Deny Application"):
     """Modal for staff to specify why an application was rejected."""
 
     reason_input: ui.TextInput = ui.TextInput(
-        label="Reason for Denial",
+        label="Reason for Denial (Optional)",
         style=discord.TextStyle.paragraph,
         placeholder="Explain why this application was denied (sent to the applicant)...",
         required=False,
@@ -521,16 +622,23 @@ class ApplicationDenyModal(ui.Modal, title="Deny Application"):
                 await interaction.followup.send("❌ Application not found.", ephemeral=True)
                 return
 
+            if app.status != "Pending":
+                await interaction.followup.send(
+                    f"⚠️ This application has already been marked as **{app.status}**.",
+                    ephemeral=True,
+                )
+                return
+
             now = datetime.datetime.now(datetime.timezone.utc)
-            reason = self.reason_input.value.strip() or "Does not meet current requirements."
+            reason = self.reason_input.value.strip()
 
             app.status = "Denied"
             app.reviewer_id = interaction.user.id
             app.reviewer_name = interaction.user.display_name
-            app.review_reason = reason
+            app.review_reason = reason if reason else None
             app.reviewed_at = now
 
-            # Refresh review embed in staff channel
+            # Refresh review embed in pending channel
             embed = build_application_embed(app, interaction.guild)
             view = ApplicationReviewView(self.cfg)
             for child in view.children:
@@ -543,17 +651,33 @@ class ApplicationDenyModal(ui.Modal, title="Deny Application"):
             except Exception as exc:
                 log.warning("Could not edit review message %s: %s", self.message_id, exc)
 
-            # DM Applicant
+            # Log to Denied Channel (1570844392477163623)
+            app_cfg = next((a for a in self.cfg.applications if a.key == app.type_key), None)
+            denied_chan_id = (
+                (app_cfg.denied_channel_id if app_cfg else None)
+                or self.cfg.channels.application_denied_channel_id
+            )
+            if denied_chan_id:
+                denied_chan = interaction.guild.get_channel(denied_chan_id)
+                if denied_chan:
+                    try:
+                        await denied_chan.send(embed=embed)
+                    except Exception as exc:
+                        log.warning("Could not post to denied channel %s: %s", denied_chan_id, exc)
+
+            # DM Applicant: "You've been denied" and the reason
             try:
                 applicant_user = await interaction.client.fetch_user(app.applicant_id)
+                dm_desc = "You've been denied for Darklands SMP."
+                if reason:
+                    dm_desc += f"\n\n**Reason:** {reason}"
+                else:
+                    dm_desc += "\n\n**Reason:** No specific reason provided."
+                dm_desc += "\n\nThank you for taking the time to apply. You are welcome to reapply in the future!"
+
                 dm_embed = discord.Embed(
                     title=f"Update on your {app.type_name}",
-                    description=(
-                        f"Hello **{applicant_user.display_name}**,\n\n"
-                        f"Your **{app.type_name}** for Darklands SMP was unfortunately **DENIED** by staff.\n\n"
-                        f"**Reason:** {reason}\n\n"
-                        "Thank you for your interest and support. You are welcome to reapply in the future!"
-                    ),
+                    description=dm_desc,
                     colour=0xED4245,
                     timestamp=now,
                 )
@@ -563,7 +687,7 @@ class ApplicationDenyModal(ui.Modal, title="Deny Application"):
                 log.info("Could not DM applicant %s about denial: %s", app.applicant_id, exc)
 
             await interaction.followup.send(
-                f"❌ **Application #{app.application_number} has been denied.**",
+                f"❌ **Application #{app.application_number} has been denied and logged!**",
                 ephemeral=True,
             )
 
@@ -590,12 +714,18 @@ async def open_ticket_for_application(
             ticket_number = (max_num or 0) + 1
             ticket_code = f"ticket-{ticket_number:04d}"
 
-            # 2. Pick a ticket category (prefer 'other', or first configured category)
-            ticket_type = next((t for t in cfg.ticket_types if t.key == "other"), None)
-            if not ticket_type and cfg.ticket_types:
-                ticket_type = cfg.ticket_types[0]
+            # 2. Pick ticket category (prefer application ticket category: 1570845327995572314)
+            app_cfg = next((a for a in cfg.applications if a.key == app.type_key), None)
+            category_id = (
+                (app_cfg.ticket_category_id if app_cfg else None)
+                or cfg.channels.application_ticket_category_id
+            )
+            if not category_id:
+                ticket_type = next((t for t in cfg.ticket_types if t.key == "other"), None)
+                if not ticket_type and cfg.ticket_types:
+                    ticket_type = cfg.ticket_types[0]
+                category_id = ticket_type.category_id if ticket_type else None
 
-            category_id = ticket_type.category_id if ticket_type else None
             category: Optional[discord.CategoryChannel] = (
                 guild.get_channel(category_id) if category_id else None
             )

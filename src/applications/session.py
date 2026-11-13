@@ -184,13 +184,10 @@ class ApplicationManager:
 
         # 1. Inform applicant in DM
         complete_embed = discord.Embed(
-            title="✅ Application Submitted!",
+            title="✅ Application Sent In",
             description=(
-                f"Thank you, **{message.author.display_name}**! Your **{session.app_name}** has been successfully "
-                "submitted to the Darklands SMP staff team.\n\n"
-                "• Our staff will review your responses shortly.\n"
-                "• You will be notified directly in this DM once a decision has been made.\n\n"
-                "Good luck, and thank you for supporting the network!"
+                f"Application sent in, the staff will review it and we'll get back to you.\n\n"
+                f"Thank you for applying for **{session.app_name}** on Darklands SMP!"
             ),
             colour=0x57F287,
             timestamp=datetime.datetime.now(datetime.timezone.utc),
@@ -223,14 +220,16 @@ class ApplicationManager:
             None,
         )
 
-        # Determine target review channel
+        # Determine target review channel (prefer pending channel)
         channel_id = None
-        if app_cfg and app_cfg.channel_id:
+        if app_cfg and app_cfg.pending_channel_id:
+            channel_id = app_cfg.pending_channel_id
+        elif cfg.channels.application_pending_channel_id:
+            channel_id = cfg.channels.application_pending_channel_id
+        elif app_cfg and app_cfg.channel_id:
             channel_id = app_cfg.channel_id
         elif cfg.channels.application_channel_id:
             channel_id = cfg.channels.application_channel_id
-        elif cfg.channels.transcript_log_channel_id:
-            channel_id = cfg.channels.transcript_log_channel_id
 
         target_channel: Optional[discord.TextChannel] = None
         if channel_id:

@@ -34,14 +34,22 @@
     }
   ],
   "channels": {
-    "transcript_log_channel_id": 1562443143268409477,
-    "log_channel_closed_id":     1562443143268409477,
-    "welcome_channel_id":        1562413090346369115,
-    "suggestion_channel_id":     1562452208430227517,
-    "question_channel_id":       null,
-    "bug_report_channel_id":     null,
-    "gang_recruitment_channel_id": 1562414173948743710,
-    "application_channel_id":    1562443143268409477
+    "transcript_log_channel_id":      1562443143268409477,
+    "log_channel_closed_id":          1562443143268409477,
+    "welcome_channel_id":             1562413090346369115,
+    "suggestion_channel_id":          1562452208430227517,
+    "question_channel_id":            null,
+    "bug_report_channel_id":          1562455946335232120,
+    "gang_recruitment_channel_id":    1562414173948743710,
+    "application_channel_id":         1562431588355280896,
+    "application_pending_channel_id": 1570844709297852548,
+    "application_accepted_channel_id": 1570844617773940741,
+    "application_denied_channel_id":  1570844392477163623,
+    "application_ticket_category_id": 1570845327995572314,
+    "beta_tester_role_id":            1570845593675370628,
+    "beta_tester_lounge_channel_id":  1570846697414852628,
+    "tester_info_channel_id":         1570846617366560928,
+    "owner_user_id":                  1162838607220965377
   },
   "applications": [
     {
@@ -49,8 +57,13 @@
       "name": "Beta Tester Application",
       "description": "Apply to test Darklands SMP before public release! Help us stress-test systems and report bugs.",
       "emoji": "🧪",
-      "channel_id": 1562443143268409477,
-      "accepted_role_id": null,
+      "channel_id": 1562431588355280896,
+      "pending_channel_id": 1570844709297852548,
+      "accepted_channel_id": 1570844617773940741,
+      "denied_channel_id": 1570844392477163623,
+      "accepted_role_id": 1570845593675370628,
+      "ticket_category_id": 1570845327995572314,
+      "lounge_channel_id": 1570846697414852628,
       "questions": [
         "What is your Minecraft Java in-game username (IGN)?",
         "How old are you?",

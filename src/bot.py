@@ -155,6 +155,96 @@ class DarklansBot(commands.Bot):
     async def on_ready(self):
         """Fired once the bot has fully connected and cached guild data."""
         log.info("🟢  Logged in as %s (ID: %s)", self.user, self.user.id)
+        await self._ensure_startup_panels()
+
+    async def _ensure_startup_panels(self):
+        """Ensure the Application Panel and Tester Info Guide are posted if not already present."""
+        try:
+            # 1. Application Panel (1562431588355280896)
+            app_chan_id = cfg.channels.application_channel_id
+            if app_chan_id:
+                channel = self.get_channel(app_chan_id)
+                if channel and isinstance(channel, discord.TextChannel):
+                    already_posted = False
+                    try:
+                        async for msg in channel.history(limit=30):
+                            if msg.author.id == self.user.id and msg.embeds:
+                                if any("Darklands Applications" in (e.title or "") for e in msg.embeds):
+                                    already_posted = True
+                                    break
+                    except Exception as exc:
+                        log.warning("Could not read history for application channel: %s", exc)
+
+                    if not already_posted:
+                        from applications.views import ApplicationLaunchView
+                        embed = discord.Embed(
+                            title="Darklands Applications",
+                            description=(
+                                "**Darklands Applications: Click below to select an application and start applying**\n\n"
+                                "• **🧪 Beta Tester Application** — Apply to test Darklands SMP before public launch!\n\n"
+                                "**How it works:**\n"
+                                "1. Select your application category from the dropdown menu below.\n"
+                                "2. The bot will send you a **Direct Message** with your interview questions.\n"
+                                "3. Answer each question directly in DMs at your own pace (type `cancel` to quit anytime).\n"
+                                "4. Once submitted, our staff team will review your application and update you directly in your DMs!\n\n"
+                                "⚠️ *Please ensure you have **Allow Direct Messages from Server Members** enabled in Discord Settings!*"
+                            ),
+                            colour=0x5865F2,
+                        )
+                        embed.set_footer(text="Darklands SMP Network • Official Applications")
+                        view = ApplicationLaunchView(cfg)
+                        await channel.send(embed=embed, view=view)
+                        log.info("✅ Auto-posted Application Launch Panel to channel %d", app_chan_id)
+
+            # 2. Beta Tester Info Channel (1570846617366560928)
+            info_chan_id = cfg.channels.tester_info_channel_id
+            if info_chan_id:
+                info_channel = self.get_channel(info_chan_id)
+                if info_channel and isinstance(info_channel, discord.TextChannel):
+                    already_posted_info = False
+                    try:
+                        async for msg in info_channel.history(limit=30):
+                            if msg.author.id == self.user.id and msg.embeds:
+                                if any("Beta Tester Information & Guidelines" in (e.title or "") for e in msg.embeds):
+                                    already_posted_info = True
+                                    break
+                    except Exception as exc:
+                        log.warning("Could not read history for tester info channel: %s", exc)
+
+                    if not already_posted_info:
+                        bug_ref = f"<#{cfg.channels.bug_report_channel_id}>" if cfg.channels.bug_report_channel_id else "#bug-reports"
+                        sug_ref = f"<#{cfg.channels.suggestion_channel_id}>" if cfg.channels.suggestion_channel_id else "#suggestions"
+                        lounge_ref = f"<#{cfg.channels.beta_tester_lounge_channel_id}>" if cfg.channels.beta_tester_lounge_channel_id else "#tester-lounge"
+                        owner_ref = f"<@{cfg.channels.owner_user_id}>" if cfg.channels.owner_user_id else "Server Owner"
+
+                        info_embed = discord.Embed(
+                            title="🧪 Darklands SMP — Beta Tester Information & Guidelines",
+                            description=(
+                                "Welcome to the **Darklands SMP Beta Tester Team**! As a beta tester, you play a vital role "
+                                "in polishing server mechanics, balancing gameplay, testing features, and discovering bugs "
+                                "before our public launch.\n\n"
+                                "─────────────────────────────\n\n"
+                                f"🐛 **Found a Bug or Glitch?**\n"
+                                f"• Head over to {bug_ref} and click **Report a Bug** or use `/bug report`.\n"
+                                "• Please include clear reproduction steps, coordinates (if in-game), and any screenshots/videos.\n\n"
+                                f"💡 **Have an Idea or Feedback?**\n"
+                                f"• Post your ideas in {sug_ref} using `/suggestion submit`.\n"
+                                "• Other testers and community members can upvote, downvote, and discuss.\n\n"
+                                f"🚨 **Critical or Game-Breaking Exploit?**\n"
+                                "• If you discover a severe duplication exploit, economy breaking bug, or crash glitch, **DO NOT post it publicly**.\n"
+                                f"• Open a private staff ticket in the server or send a direct DM to {owner_ref}.\n\n"
+                                f"💬 **Tester Chat & Discussion:**\n"
+                                f"• Chat with other testers and staff in {lounge_ref}.\n\n"
+                                "Thank you for supporting Darklands SMP and helping us create the best experience possible!"
+                            ),
+                            colour=0x5865F2,
+                            timestamp=discord.utils.utcnow(),
+                        )
+                        info_embed.set_footer(text="Darklands SMP • Beta Testing Program")
+                        await info_channel.send(embed=info_embed)
+                        log.info("✅ Auto-posted Beta Tester Info Guide to channel %d", info_chan_id)
+        except Exception as exc:
+            log.exception("Error checking/auto-posting startup panels: %s", exc)
 
     # ── Events ────────────────────────────────────────────────────────────────
 

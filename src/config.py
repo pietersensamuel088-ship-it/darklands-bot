@@ -39,23 +39,36 @@ class TicketTypeConfig(BaseModel):
     default_priority: str = "Medium"
 
 class ChannelConfig(BaseModel):
-    transcript_log_channel_id: int
-    log_channel_closed_id:     int
-    welcome_channel_id:        Optional[int] = None
-    suggestion_channel_id:     Optional[int] = None
-    question_channel_id:       Optional[int] = None
-    bug_report_channel_id:     Optional[int] = None
-    gang_recruitment_channel_id: Optional[int] = None
-    application_channel_id:     Optional[int] = None
+    transcript_log_channel_id:      int
+    log_channel_closed_id:          int
+    welcome_channel_id:             Optional[int] = None
+    suggestion_channel_id:          Optional[int] = None
+    question_channel_id:            Optional[int] = None
+    bug_report_channel_id:          Optional[int] = None
+    gang_recruitment_channel_id:    Optional[int] = None
+    application_channel_id:         Optional[int] = None
+    application_pending_channel_id: Optional[int] = None
+    application_accepted_channel_id: Optional[int] = None
+    application_denied_channel_id:  Optional[int] = None
+    application_ticket_category_id: Optional[int] = None
+    beta_tester_role_id:            Optional[int] = None
+    beta_tester_lounge_channel_id:  Optional[int] = None
+    tester_info_channel_id:         Optional[int] = None
+    owner_user_id:                  Optional[int] = None
 
 class ApplicationTypeConfig(BaseModel):
-    key:              str = "beta_tester"
-    name:             str = "Beta Tester Application"
-    description:      str = "Apply to become an official Beta Tester for Darklands SMP!"
-    emoji:            str = "🧪"
-    channel_id:       Optional[int] = None
-    accepted_role_id: Optional[int] = None
-    questions:        list[str] = [
+    key:                  str = "beta_tester"
+    name:                 str = "Beta Tester Application"
+    description:          str = "Apply to become an official Beta Tester for Darklands SMP!"
+    emoji:                str = "🧪"
+    channel_id:           Optional[int] = None
+    pending_channel_id:   Optional[int] = None
+    accepted_channel_id:  Optional[int] = None
+    denied_channel_id:    Optional[int] = None
+    accepted_role_id:     Optional[int] = None
+    ticket_category_id:   Optional[int] = None
+    lounge_channel_id:    Optional[int] = None
+    questions:            list[str] = [
         "What is your Minecraft Java in-game username (IGN)?",
         "How old are you?",
         "What is your timezone or region?",
