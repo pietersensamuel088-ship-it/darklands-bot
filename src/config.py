@@ -46,6 +46,23 @@ class ChannelConfig(BaseModel):
     question_channel_id:       Optional[int] = None
     bug_report_channel_id:     Optional[int] = None
     gang_recruitment_channel_id: Optional[int] = None
+    application_channel_id:     Optional[int] = None
+
+class ApplicationTypeConfig(BaseModel):
+    key:              str = "beta_tester"
+    name:             str = "Beta Tester Application"
+    description:      str = "Apply to become an official Beta Tester for Darklands SMP!"
+    emoji:            str = "🧪"
+    channel_id:       Optional[int] = None
+    accepted_role_id: Optional[int] = None
+    questions:        list[str] = [
+        "What is your Minecraft Java in-game username (IGN)?",
+        "How old are you?",
+        "What is your timezone or region?",
+        "Have you had prior experience testing Minecraft servers, mods, or plugins?",
+        "How many hours per week can you actively test and report bugs on Darklands SMP?",
+        "Why do you want to be a Beta Tester for Darklands SMP?",
+    ]
 
 class RoleIds(BaseModel):
     staff: list[int] = []
@@ -69,6 +86,7 @@ class BotConfig(BaseModel):
     role_ids:                   RoleIds
     permissions:                PermissionsConfig
     max_open_tickets_per_user:  int = 1
+    applications:               list[ApplicationTypeConfig] = []
 
 # ── Loader ────────────────────────────────────────────────────────────────────
 _CONFIG_PATH = pathlib.Path(__file__).parent.parent / "config.json"

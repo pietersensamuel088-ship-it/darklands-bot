@@ -3,13 +3,17 @@ engine.py – Async SQLAlchemy engine and session factory.
 Uses SQLite by default (DATABASE_URL env var overrides to PostgreSQL, etc.).
 """
 import os
+import pathlib
 from contextlib import asynccontextmanager
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase
 
+_DEFAULT_DB = pathlib.Path(__file__).resolve().parent.parent.parent / "data" / "darklands.db"
+_DEFAULT_DB.parent.mkdir(parents=True, exist_ok=True)
+
 DATABASE_URL = os.getenv(
     "DATABASE_URL",
-    "sqlite+aiosqlite:///data/darklands.db",
+    f"sqlite+aiosqlite:///{_DEFAULT_DB.as_posix()}",
 )
 
 engine = create_async_engine(
@@ -47,6 +51,8 @@ async def init_db():
         DiscordSuggestion,
         DiscordQuestion,
         DiscordBugReport,
+        DiscordGangRecruitment,
+        DiscordApplication,
     )
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)

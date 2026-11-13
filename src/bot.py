@@ -56,6 +56,7 @@ class DarklansBot(commands.Bot):
     def __init__(self):
         intents = discord.Intents.default()
         intents.members = True          # Required for on_member_join and member lookups
+        intents.message_content = True  # Required for reading application answers in DMs
         super().__init__(command_prefix="!", intents=intents)
         self._worker = None             # Will hold the ClosureWorker instance
 
@@ -99,6 +100,11 @@ class DarklansBot(commands.Bot):
             GangLaunchView,
             GangCommands,
         )
+        from applications import (
+            ApplicationLaunchView,
+            ApplicationReviewView,
+            ApplyCommands,
+        )
 
         # ── Database ──────────────────────────────────────────────────────────
         await init_db()
@@ -118,6 +124,8 @@ class DarklansBot(commands.Bot):
         self.add_view(BugItemView(cfg))
         self.add_view(GangLaunchView(cfg))
         self.add_view(GangItemView(cfg))
+        self.add_view(ApplicationLaunchView(cfg))
+        self.add_view(ApplicationReviewView(cfg))
         log.info("Persistent views registered.")
 
         # ── Slash commands ────────────────────────────────────────────────────
@@ -128,6 +136,7 @@ class DarklansBot(commands.Bot):
         self.tree.add_command(QuestionCommands(cfg), guild=GUILD)
         self.tree.add_command(BugCommands(cfg), guild=GUILD)
         self.tree.add_command(GangCommands(cfg), guild=GUILD)
+        self.tree.add_command(ApplyCommands(cfg), guild=GUILD)
 
         synced = await self.tree.sync(guild=GUILD)
         log.info(
@@ -195,6 +204,21 @@ class DarklansBot(commands.Bot):
         )
 
         await channel.send(embed=embed)
+
+    async def on_message(self, message: discord.Message):
+        """Listen to incoming messages, routing DMs to the application session manager."""
+        if message.author.bot:
+            return
+
+        # Direct messages routing for Application interviews
+        if message.guild is None:
+            from applications.session import application_manager
+            if application_manager.has_session(message.author.id):
+                handled = await application_manager.handle_dm(self, message, cfg)
+                if handled:
+                    return
+
+        await self.process_commands(message)
 
 
 # ── Entry point ───────────────────────────────────────────────────────────────

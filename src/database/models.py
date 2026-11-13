@@ -194,3 +194,31 @@ class DiscordGangRecruitment(Base):
 
     def __repr__(self) -> str:
         return f"<DiscordGangRecruitment #{self.recruitment_number} gang={self.gang_name}>"
+
+
+class DiscordApplication(Base):
+    __tablename__ = "discord_applications"
+
+    id:                 Mapped[int]               = mapped_column(Integer, primary_key=True, autoincrement=True)
+    application_number: Mapped[int]               = mapped_column(Integer, unique=True, nullable=False)
+    type_key:           Mapped[str]               = mapped_column(String(64), nullable=False, default="beta_tester")
+    type_name:          Mapped[str]               = mapped_column(String(128), nullable=False, default="Beta Tester Application")
+    applicant_id:       Mapped[int]               = mapped_column(BigInteger, nullable=False)
+    applicant_name:     Mapped[str]               = mapped_column(String(128), nullable=False)
+    applicant_avatar:   Mapped[str | None]        = mapped_column(String(256), nullable=True)
+    status:             Mapped[str]               = mapped_column(String(32), nullable=False, default="Pending")
+    answers:            Mapped[list]              = mapped_column(JSON, nullable=False, default=list)
+    reviewer_id:        Mapped[int | None]        = mapped_column(BigInteger, nullable=True)
+    reviewer_name:      Mapped[str | None]        = mapped_column(String(128), nullable=True)
+    review_reason:      Mapped[str | None]        = mapped_column(Text, nullable=True)
+    reviewed_at:        Mapped[datetime.datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    channel_id:         Mapped[int | None]        = mapped_column(BigInteger, nullable=True)
+    message_id:         Mapped[int | None]        = mapped_column(BigInteger, unique=True, nullable=True)
+    ticket_id:          Mapped[int | None]        = mapped_column(Integer, nullable=True)
+    ticket_channel_id:  Mapped[int | None]        = mapped_column(BigInteger, nullable=True)
+    created_at:         Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at:         Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+    def __repr__(self) -> str:
+        return f"<DiscordApplication #{self.application_number} type={self.type_key} status={self.status}>"
+
