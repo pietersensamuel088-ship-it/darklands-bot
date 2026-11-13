@@ -69,12 +69,16 @@ class ApplicationTypeConfig(BaseModel):
     ticket_category_id:   Optional[int] = None
     lounge_channel_id:    Optional[int] = None
     questions:            list[str] = [
-        "What is your Minecraft Java in-game username (IGN)?",
-        "How old are you?",
-        "What is your timezone or region?",
-        "Have you had prior experience testing Minecraft servers, mods, or plugins?",
-        "How many hours per week can you actively test and report bugs on Darklands SMP?",
-        "Why do you want to be a Beta Tester for Darklands SMP?",
+        "What is your Minecraft username? (Short answer)",
+        "What is your Minecraft UUID? (Short answer — check mcuuid.net if needed)",
+        "How old are you? (Short answer)",
+        "What is your Discord username? (Short answer)",
+        "How long have you been playing Minecraft, and what experience do you have with SMP servers? (Paragraph)",
+        "Why would you like to become a beta tester for our SMP? (Paragraph)",
+        "Have you ever beta tested or helped test a Minecraft server before? (Yes/No + explanation if yes)",
+        "What would you do if you found a bug, glitch, or exploit during testing? (Paragraph)",
+        "How active would you be during the beta testing phase? (Choose one: Daily / A few times a week / Once a week / Only occasionally)",
+        "Is there anything else you would like us to know? (Optional — reply 'none' if nothing)",
     ]
 
 class RoleIds(BaseModel):
