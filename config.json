@@ -53,8 +53,8 @@
     "server_info_channel_id":         1570846550664413264
   },
   "minecraft_server": {
-    "host": "play.darklands.net",
-    "port": 25565,
+    "host": "minecraft.atomichost.co.za",
+    "port": 17040,
     "bedrock_port": 19132,
     "display_name": "Darklands SMP",
     "update_interval_seconds": 60
