@@ -55,6 +55,14 @@ class ChannelConfig(BaseModel):
     beta_tester_lounge_channel_id:  Optional[int] = None
     tester_info_channel_id:         Optional[int] = None
     owner_user_id:                  Optional[int] = None
+    server_info_channel_id:         Optional[int] = None
+
+class MinecraftServerConfig(BaseModel):
+    host:                     str = "play.darklands.net"
+    port:                     int = 25565
+    bedrock_port:             int = 19132
+    display_name:             str = "Darklands SMP"
+    update_interval_seconds:  int = 60
 
 class ApplicationTypeConfig(BaseModel):
     key:                  str = "beta_tester"
@@ -104,6 +112,7 @@ class BotConfig(BaseModel):
     permissions:                PermissionsConfig
     max_open_tickets_per_user:  int = 1
     applications:               list[ApplicationTypeConfig] = []
+    minecraft_server:           MinecraftServerConfig = Field(default_factory=MinecraftServerConfig)
 
 # ── Loader ────────────────────────────────────────────────────────────────────
 _CONFIG_PATH = pathlib.Path(__file__).parent.parent / "config.json"

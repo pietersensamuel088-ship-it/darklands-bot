@@ -222,3 +222,20 @@ class DiscordApplication(Base):
     def __repr__(self) -> str:
         return f"<DiscordApplication #{self.application_number} type={self.type_key} status={self.status}>"
 
+
+class MinecraftStatusHistory(Base):
+    __tablename__ = "minecraft_status_history"
+
+    id:             Mapped[int]               = mapped_column(Integer, primary_key=True, autoincrement=True)
+    timestamp:      Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), index=True)
+    is_online:      Mapped[bool]              = mapped_column(Boolean, nullable=False, default=False)
+    players_online: Mapped[int]               = mapped_column(Integer, nullable=False, default=0)
+    players_max:    Mapped[int]               = mapped_column(Integer, nullable=False, default=0)
+    ping_ms:        Mapped[float | None]      = mapped_column(nullable=True)
+    tps:            Mapped[float | None]      = mapped_column(nullable=True)
+    version:        Mapped[str | None]        = mapped_column(String(64), nullable=True)
+
+    def __repr__(self) -> str:
+        return f"<MinecraftStatusHistory online={self.is_online} players={self.players_online}/{self.players_max}>"
+
+

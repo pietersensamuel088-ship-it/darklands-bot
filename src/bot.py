@@ -59,6 +59,7 @@ class DarklansBot(commands.Bot):
         intents.message_content = True  # Required for reading application answers in DMs
         super().__init__(command_prefix="!", intents=intents)
         self._worker = None             # Will hold the ClosureWorker instance
+        self._status_worker = None      # Will hold the ServerStatusWorker instance
 
     # ── Lifecycle ─────────────────────────────────────────────────────────────
 
@@ -138,6 +139,9 @@ class DarklansBot(commands.Bot):
         self.tree.add_command(GangCommands(cfg), guild=GUILD)
         self.tree.add_command(ApplyCommands(cfg), guild=GUILD)
 
+        from server_status import ServerStatusCommands, ServerStatusWorker
+        self.tree.add_command(ServerStatusCommands(cfg), guild=GUILD)
+
         synced = await self.tree.sync(guild=GUILD)
         log.info(
             "Synced %d slash command(s) to guild %s.",
@@ -145,12 +149,17 @@ class DarklansBot(commands.Bot):
             GUILD_ID,
         )
 
-        # ── Background worker ─────────────────────────────────────────────────
+        # ── Background workers ────────────────────────────────────────────────
         # ClosureWorker is a discord.ext.tasks loop that polls for tickets
         # whose auto-close deadline has passed and closes them.
         self._worker = ClosureWorker(self, cfg)
         self._worker.start()
         log.info("Closure worker started.")
+
+        # ServerStatusWorker tracks live Minecraft status & updates #server-info
+        self._status_worker = ServerStatusWorker(self, cfg)
+        self._status_worker.start()
+        log.info("ServerStatusWorker started.")
 
     async def on_ready(self):
         """Fired once the bot has fully connected and cached guild data."""

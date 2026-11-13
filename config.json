@@ -49,7 +49,15 @@
     "beta_tester_role_id":            1570845593675370628,
     "beta_tester_lounge_channel_id":  1570846697414852628,
     "tester_info_channel_id":         1570846617366560928,
-    "owner_user_id":                  1162838607220965377
+    "owner_user_id":                  1162838607220965377,
+    "server_info_channel_id":         1570846550664413264
+  },
+  "minecraft_server": {
+    "host": "play.darklands.net",
+    "port": 25565,
+    "bedrock_port": 19132,
+    "display_name": "Darklands SMP",
+    "update_interval_seconds": 60
   },
   "applications": [
     {
