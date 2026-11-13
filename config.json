@@ -59,38 +59,6 @@
         "How many hours per week can you actively test and report bugs on Darklands SMP?",
         "Why do you want to be a Beta Tester for Darklands SMP?"
       ]
-    },
-    {
-      "key": "staff",
-      "name": "Staff Application",
-      "description": "Apply to join the Darklands SMP moderation and helper team.",
-      "emoji": "🛡️",
-      "channel_id": 1562443143268409477,
-      "accepted_role_id": null,
-      "questions": [
-        "What is your Minecraft Java in-game username (IGN)?",
-        "How old are you?",
-        "What timezone or region are you located in?",
-        "How long have you been playing on Minecraft SMPs, and how long on Darklands?",
-        "Have you had past staff or moderation experience? If so, where and what was your role?",
-        "How would you handle a situation where two players are aggressively arguing in chat?",
-        "Why do you want to join the Darklands SMP staff team?"
-      ]
-    },
-    {
-      "key": "builder",
-      "name": "Builder Application",
-      "description": "Apply to build spawns, warps, dungeons, and landmarks for Darklands SMP.",
-      "emoji": "🔨",
-      "channel_id": 1562443143268409477,
-      "accepted_role_id": null,
-      "questions": [
-        "What is your Minecraft Java in-game username (IGN)?",
-        "How old are you?",
-        "What building styles do you specialize in (e.g. medieval, fantasy, modern, terraforming)?",
-        "Please provide links to screenshots or a portfolio of your builds.",
-        "Why do you want to build for Darklands SMP?"
-      ]
     }
   ],
   "role_ids": {
