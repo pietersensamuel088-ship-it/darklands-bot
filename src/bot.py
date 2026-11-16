@@ -127,6 +127,9 @@ class DarklansBot(commands.Bot):
         self.add_view(GangItemView(cfg))
         self.add_view(ApplicationLaunchView(cfg))
         self.add_view(ApplicationReviewView(cfg))
+
+        from promo import PromoRedeemLaunchView, PromoCommands, redeem_slash_command, claim_slash_command
+        self.add_view(PromoRedeemLaunchView(cfg))
         log.info("Persistent views registered.")
 
         # ── Slash commands ────────────────────────────────────────────────────
@@ -138,6 +141,9 @@ class DarklansBot(commands.Bot):
         self.tree.add_command(BugCommands(cfg), guild=GUILD)
         self.tree.add_command(GangCommands(cfg), guild=GUILD)
         self.tree.add_command(ApplyCommands(cfg), guild=GUILD)
+        self.tree.add_command(PromoCommands(cfg), guild=GUILD)
+        self.tree.add_command(redeem_slash_command, guild=GUILD)
+        self.tree.add_command(claim_slash_command, guild=GUILD)
 
         from server_status import ServerStatusCommands, ServerStatusWorker
         self.tree.add_command(ServerStatusCommands(cfg), guild=GUILD)
@@ -252,6 +258,30 @@ class DarklansBot(commands.Bot):
                         info_embed.set_footer(text="Darklands SMP • Beta Testing Program")
                         await info_channel.send(embed=info_embed)
                         log.info("✅ Auto-posted Beta Tester Info Guide to channel %d", info_chan_id)
+
+            # 3. Promo Code Redemption Channel (1571924571853037754)
+            promo_chan_id = cfg.channels.promo_redeem_channel_id
+            if promo_chan_id:
+                promo_channel = self.get_channel(promo_chan_id)
+                if promo_channel and isinstance(promo_channel, discord.TextChannel):
+                    already_posted_promo = False
+                    try:
+                        async for msg in promo_channel.history(limit=30):
+                            if msg.author.id == self.user.id and msg.embeds:
+                                if any("Redeem Promo Codes" in (e.title or "") for e in msg.embeds):
+                                    already_posted_promo = True
+                                    break
+                    except Exception as exc:
+                        log.warning("Could not read history for promo redeem channel: %s", exc)
+
+                    if not already_posted_promo:
+                        from promo.service import build_promo_panel_embed
+                        from promo.views import PromoRedeemLaunchView
+
+                        embed = build_promo_panel_embed()
+                        view = PromoRedeemLaunchView(cfg)
+                        await promo_channel.send(embed=embed, view=view)
+                        log.info("✅ Auto-posted Promo Code Redemption Panel to channel %d", promo_chan_id)
         except Exception as exc:
             log.exception("Error checking/auto-posting startup panels: %s", exc)
 

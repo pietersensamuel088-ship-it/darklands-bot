@@ -56,6 +56,7 @@ class ChannelConfig(BaseModel):
     tester_info_channel_id:         Optional[int] = None
     owner_user_id:                  Optional[int] = None
     server_info_channel_id:         Optional[int] = None
+    promo_redeem_channel_id:        Optional[int] = None
 
 class MinecraftServerConfig(BaseModel):
     host:                     str = "play.darklands.net"

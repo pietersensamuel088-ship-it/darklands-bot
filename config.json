@@ -50,7 +50,8 @@
     "beta_tester_lounge_channel_id":  1570846697414852628,
     "tester_info_channel_id":         1570846617366560928,
     "owner_user_id":                  1162838607220965377,
-    "server_info_channel_id":         1570846550664413264
+    "server_info_channel_id":         1570846550664413264,
+    "promo_redeem_channel_id":        1571924571853037754
   },
   "minecraft_server": {
     "host": "minecraft.atomichost.co.za",
