@@ -59,7 +59,7 @@ class ChannelConfig(BaseModel):
     promo_redeem_channel_id:        Optional[int] = None
 
 class MinecraftServerConfig(BaseModel):
-    host:                     str = "play.darklands.net"
+    host:                     str = "darklands.sa1nt.xyz"
     port:                     int = 25565
     bedrock_port:             int = 19132
     display_name:             str = "Darklands SMP"

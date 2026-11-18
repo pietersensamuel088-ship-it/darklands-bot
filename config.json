@@ -54,8 +54,8 @@
     "promo_redeem_channel_id":        1571924571853037754
   },
   "minecraft_server": {
-    "host": "minecraft.atomichost.co.za",
-    "port": 17040,
+    "host": "darklands.sa1nt.xyz",
+    "port": 25565,
     "bedrock_port": 19132,
     "display_name": "Darklands SMP",
     "update_interval_seconds": 60
