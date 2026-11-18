@@ -94,6 +94,7 @@ class DarklansBot(commands.Bot):
         from bugs import (
             BugItemView,
             BugLaunchView,
+            BugStaffActionView,
             BugCommands,
         )
         from gangs import (
@@ -123,6 +124,7 @@ class DarklansBot(commands.Bot):
         self.add_view(QuestionItemView(cfg))
         self.add_view(BugLaunchView(cfg))
         self.add_view(BugItemView(cfg))
+        self.add_view(BugStaffActionView(cfg))
         self.add_view(GangLaunchView(cfg))
         self.add_view(GangItemView(cfg))
         self.add_view(ApplicationLaunchView(cfg))
@@ -282,6 +284,39 @@ class DarklansBot(commands.Bot):
                         view = PromoRedeemLaunchView(cfg)
                         await promo_channel.send(embed=embed, view=view)
                         log.info("✅ Auto-posted Promo Code Redemption Panel to channel %d", promo_chan_id)
+
+            # 4. Bug Report Public Channel (1562455946335232120)
+            bug_chan_id = cfg.channels.bug_report_channel_id
+            if bug_chan_id:
+                bug_channel = self.get_channel(bug_chan_id)
+                if bug_channel and isinstance(bug_channel, discord.TextChannel):
+                    already_posted_bug = False
+                    try:
+                        async for msg in bug_channel.history(limit=30):
+                            if msg.author.id == self.user.id and msg.embeds:
+                                if any("Bug & Exploit Reports" in (e.title or "") for e in msg.embeds):
+                                    already_posted_bug = True
+                                    break
+                    except Exception as exc:
+                        log.warning("Could not read history for bug report channel: %s", exc)
+
+                    if not already_posted_bug:
+                        from bugs.views import BugLaunchView
+                        embed = discord.Embed(
+                            title="🐛 Darklands SMP — Bug & Exploit Reports",
+                            description=(
+                                "Found a bug, glitch, duplication issue, or error in-game or on Discord?\n\n"
+                                "Click the button below to **Report a Bug**!\n\n"
+                                "🔒 **Private Review:** All reports are submitted directly to the developer and staff team for investigation.\n"
+                                "• Please include clear reproduction steps and your Minecraft username.\n"
+                                "• When staff reviews or fixes your report, you will receive an automatic DM update!"
+                            ),
+                            colour=0xED4245,
+                        )
+                        embed.set_footer(text="Darklands SMP Network • Bug Tracker")
+                        view = BugLaunchView(cfg)
+                        await bug_channel.send(embed=embed, view=view)
+                        log.info("✅ Auto-posted Bug Report Panel to channel %d", bug_chan_id)
         except Exception as exc:
             log.exception("Error checking/auto-posting startup panels: %s", exc)
 

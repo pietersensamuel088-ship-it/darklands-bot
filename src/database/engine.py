@@ -5,6 +5,7 @@ Uses SQLite by default (DATABASE_URL env var overrides to PostgreSQL, etc.).
 import os
 import pathlib
 from contextlib import asynccontextmanager
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase
 
@@ -45,7 +46,7 @@ async def get_session():
             raise
 
 async def init_db():
-    """Create all tables (idempotent)."""
+    """Create all tables and perform lightweight SQLite migrations (idempotent)."""
     from database.models import (  # noqa: F401 – needed for metadata
         DiscordTicket,
         DiscordSuggestion,
@@ -57,3 +58,21 @@ async def init_db():
     )
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+
+        def _migrate_columns(sync_conn):
+            try:
+                res = sync_conn.execute(text("PRAGMA table_info(discord_bug_reports);")).fetchall()
+                existing_cols = {row[1] for row in res}
+                cols_to_add = [
+                    ("minecraft_ign", "VARCHAR(128)"),
+                    ("expected_behavior", "TEXT"),
+                    ("evidence", "TEXT"),
+                    ("ticket_channel_id", "BIGINT"),
+                ]
+                for col_name, col_type in cols_to_add:
+                    if col_name not in existing_cols:
+                        sync_conn.execute(text(f"ALTER TABLE discord_bug_reports ADD COLUMN {col_name} {col_type};"))
+            except Exception:
+                pass
+
+        await conn.run_sync(_migrate_columns)

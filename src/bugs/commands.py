@@ -14,6 +14,7 @@ from bugs.views import (
     BugItemView,
     BugLaunchView,
     BugReportModal,
+    BugStaffActionView,
     build_bug_embed,
 )
 from database.engine import get_session
@@ -57,13 +58,13 @@ class BugCommands(app_commands.Group, name="bug", description="Darklands SMP Bug
             description=(
                 "Found a bug, glitch, duplication issue, or error in-game or on Discord?\n\n"
                 "Click the button below to **Report a Bug**!\n\n"
-                "• All reports create an automated discussion thread for developers.\n"
-                "• Please include exact steps to reproduce the issue.\n"
-                "• Critical exploits reported responsibly may be eligible for in-game rewards!"
+                "🔒 **Private Review:** All reports are submitted directly to the developer and staff team for investigation.\n"
+                "• Please include clear reproduction steps and your Minecraft username.\n"
+                "• When staff reviews or fixes your report, you will receive an automatic DM update!"
             ),
             colour=0xED4245,
         )
-        embed.set_footer(text="Darklands Network • Bug Tracker")
+        embed.set_footer(text="Darklands SMP Network • Bug Tracker")
 
         view = BugLaunchView(self.cfg)
         await interaction.channel.send(embed=embed, view=view)
@@ -115,14 +116,14 @@ class BugCommands(app_commands.Group, name="bug", description="Darklands SMP Bug
             b.status_updated_by = interaction.user.display_name
             await session.commit()
 
-            # Update original message embed
+            # Update original message embed in staff channel
             if b.channel_id and b.message_id:
                 channel = interaction.guild.get_channel(b.channel_id)
                 if isinstance(channel, discord.TextChannel):
                     try:
                         msg = await channel.fetch_message(b.message_id)
-                        new_embed = build_bug_embed(b)
-                        new_view = BugItemView(self.cfg)
+                        new_embed = build_bug_embed(b, interaction.guild)
+                        new_view = BugStaffActionView(self.cfg)
                         await msg.edit(embed=new_embed, view=new_view)
                     except discord.NotFound:
                         pass
@@ -149,6 +150,39 @@ class BugCommands(app_commands.Group, name="bug", description="Darklands SMP Bug
                             await thread.edit(locked=True, archived=True)
                         except discord.DiscordException:
                             pass
+
+            # Notify user via DM if status is Fixed or Invalid
+            if status in ("Fixed", "Invalid"):
+                try:
+                    reporter = await interaction.client.fetch_user(b.author_id)
+                    if reporter:
+                        if status == "Fixed":
+                            dm_embed = discord.Embed(
+                                title=f"🎉 Bug Report #{b.report_number:04d} Marked as Fixed!",
+                                description=(
+                                    f"Hello {reporter.mention},\n\n"
+                                    f"Your bug report **{b.title}** has been marked as **Fixed** by staff!\n\n"
+                                    f"**Resolution Note:**\n> {note or 'The issue has been investigated and resolved.'}\n\n"
+                                    f"**Resolved by:** {interaction.user.display_name}\n\n"
+                                    f"Thank you for helping us test and improve Darklands SMP!"
+                                ),
+                                colour=0x57F287,
+                            )
+                        else:
+                            dm_embed = discord.Embed(
+                                title=f"❌ Bug Report #{b.report_number:04d} Closed",
+                                description=(
+                                    f"Hello {reporter.mention},\n\n"
+                                    f"Your bug report **{b.title}** has been closed as **Invalid**.\n\n"
+                                    f"**Reason:**\n> {note or 'Not a bug or cannot reproduce.'}\n\n"
+                                    f"**Reviewed by:** {interaction.user.display_name}"
+                                ),
+                                colour=0xED4245,
+                            )
+                        dm_embed.set_footer(text="Darklands SMP • Bug Tracker")
+                        await reporter.send(embed=dm_embed)
+                except Exception:
+                    pass
 
         await interaction.followup.send(
             f"✅ Bug report **#{report_number}** marked as **{status}**!",

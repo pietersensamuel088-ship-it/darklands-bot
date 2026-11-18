@@ -57,6 +57,7 @@ class ChannelConfig(BaseModel):
     owner_user_id:                  Optional[int] = None
     server_info_channel_id:         Optional[int] = None
     promo_redeem_channel_id:        Optional[int] = None
+    bug_staff_channel_id:           Optional[int] = None
 
 class MinecraftServerConfig(BaseModel):
     host:                     str = "darklands.sa1nt.xyz"
